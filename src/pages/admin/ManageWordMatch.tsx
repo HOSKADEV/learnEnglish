@@ -13,7 +13,9 @@ import {
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import { Plus, Edit2, Trash2, X } from "lucide-react";
-
+import { SearchBar } from "@/components/shared/SearchBar";
+import { Pagination } from "@/components/shared/Pagination";
+import { usePagination } from "@/hooks/usePagination";
 interface Question {
   id?: string;
   english: string;
@@ -24,6 +26,7 @@ interface Question {
 export default function ManageWordMatch() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -32,6 +35,21 @@ export default function ManageWordMatch() {
   const [deleteId, setDeleteId] = useState("");
 
   const [form, setForm] = useState({ english: "", arabic: "", order: 1 });
+
+  // Use pagination hook
+  const {
+    currentItems: currentQuestions,
+    filteredItems: filteredQuestions,
+    currentPage,
+    totalPages,
+    startIndex,
+    setCurrentPage,
+  } = usePagination({
+    items: questions,
+    itemsPerPage: 10,
+    searchTerm,
+    searchFields: ['english', 'arabic'],
+  });
 
   useEffect(() => {
     loadQuestions();
@@ -102,21 +120,30 @@ export default function ManageWordMatch() {
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-6xl mx-auto">
         {/* العنوان + زر الإضافة */}
-        <div className=" rounded-2xl shadow-xl p-8 mb-8">
-          <div className="flex items-center justify-between">
+        <div className="rounded-2xl shadow-xl p-8 mb-8 bg-white">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-4xl font-bold text-gray-800">إدارة مطابقة الكلمات</h1>
-              <p className="text-gray-600 mt-2 text-lg">عدد الأسئلة: {questions.length}</p>
+              <p className="text-gray-600 mt-2 text-lg">
+                عدد الأسئلة: {questions.length}
+                {searchTerm && ` (نتائج البحث: ${filteredQuestions.length})`}
+              </p>
             </div>
             <button
               onClick={openAddModal}
-              className="px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-[15px] py-2 rounded-xl hover:opacity-90 transition flex items-center justify-center gap-3 disabled:opacity-70"
-
+              className="px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-[15px] py-2 rounded-xl hover:opacity-90 transition flex items-center justify-center gap-3"
             >
               <Plus size={28} />
               إضافة سؤال جديد
             </button>
           </div>
+
+          {/* شريط البحث */}
+          <SearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="ابحث عن كلمة بالإنجليزية أو العربية..."
+          />
         </div>
 
         {/* الجدول */}
@@ -131,16 +158,16 @@ export default function ManageWordMatch() {
               </tr>
             </thead>
             <tbody>
-              {questions.length === 0 ? (
+              {currentQuestions.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="text-center py-16 text-gray-500 text-xl">
-                    لا توجد أسئلة بعد
+                    {searchTerm ? "لا توجد نتائج للبحث" : "لا توجد أسئلة بعد"}
                   </td>
                 </tr>
               ) : (
-                questions.map((q, index) => (
+                currentQuestions.map((q, index) => (
                   <tr key={q.id} className="border-t hover:bg-gray-50 transition">
-                    <td className="px-6 py-4 text-center font-medium">{q.order || index + 1}</td>
+                    <td className="px-6 py-4 text-center font-medium">{q.order || startIndex + index + 1}</td>
                     <td className="px-6 py-4 font-bold text-lg">{q.english}</td>
                     <td className="px-6 py-4 font-bold text-blue-600 text-lg">{q.arabic}</td>
                     <td className="px-6 py-4">
@@ -165,6 +192,14 @@ export default function ManageWordMatch() {
             </tbody>
           </table>
         </div>
+
+        {/* أزرار التنقل بين الصفحات */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          className="mt-8"
+        />
       </div>
 
       {/* مودال الإضافة والتعديل */}
@@ -189,14 +224,13 @@ export default function ManageWordMatch() {
             <input type="number" placeholder="الترتيب" value={form.order}
               onChange={e => setForm({...form, order: +e.target.value || 1})}
               className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg mb-8 focus:border-blue-500 outline-none" />
-            <div className="flex items-center justigy-center gap-4 mt-8 pt-8">
+            <div className="flex items-center justify-center gap-4 mt-8 pt-8">
               <button onClick={save}
-             className=" "
->
+                className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 rounded-xl font-bold text-xl hover:opacity-90 transition">
                 {isEdit ? "حفظ التعديلات" : "حفظ السؤال"}
               </button>
               <button onClick={() => setShowAddEditModal(false)}
-                className="flex-1 bg-gray-300 py-4 rounded-xl  hover:bg-gray-400 transition">
+                className="flex-1 bg-gray-300 py-4 rounded-xl font-bold text-xl hover:bg-gray-400 transition">
                 إلغاء
               </button>
             </div>
