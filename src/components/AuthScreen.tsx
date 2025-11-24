@@ -21,12 +21,21 @@ export default function AuthScreen() {
       if (isLogin) {
         await signInWithEmailAndPassword(auth, email, password);
       } else {
+        // إنشاء مستخدم جديد
         const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+        // حفظ سجل النقاط
         await setDoc(doc(db, "scores", cred.user.uid), {
           wordMatch: 0,
           fillBlank: 0,
           translation: 0,
           letterScramble: 0
+        });
+
+        // حفظ المستخدم في مجموعة "users" لاستخدامه في Main
+        await setDoc(doc(db, "users", cred.user.uid), {
+          email: cred.user.email,
+          createdAt: new Date(),
         });
       }
     } catch (err: any) {

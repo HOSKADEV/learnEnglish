@@ -17,6 +17,7 @@ import ManageWordMatch from './pages/admin/ManageWordMatch';
 import ManageLetterScramble from './pages/admin/ManageLetterScramble';
 import ManageTranslation from './pages/admin/ManageTranslation';
 import ManageFillBlank from './pages/admin/ManageFillBlank';
+import ManageUsers from './pages/admin/ManageUsers';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -117,6 +118,7 @@ export default function App() {
         <Route path="fill-blank" element={<ManageFillBlank />} />
         <Route path="translation" element={<ManageTranslation />} />
         <Route path="letter-scramble" element={<ManageLetterScramble />} />
+        <Route path="users" element={<ManageUsers />} />
       </Route>
 
       {/* Fallback */}
