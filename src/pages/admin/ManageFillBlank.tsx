@@ -11,7 +11,7 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { db } from "../../firebase";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { Plus, Edit2, Trash2, X } from "lucide-react";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { Pagination } from "@/components/shared/Pagination";
 import { usePagination } from "@/hooks/usePagination";
@@ -28,8 +28,7 @@ interface Question {
 export default function ManageFillBlank() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(""); // جديد: حالة البحث
-
+  const [searchTerm, setSearchTerm] = useState("");
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
@@ -46,7 +45,6 @@ export default function ManageFillBlank() {
     order: 1,
   });
 
-  // استخدام hook الـ Pagination مع البحث
   const {
     currentItems: currentQuestions,
     filteredItems: filteredQuestions,
@@ -58,7 +56,7 @@ export default function ManageFillBlank() {
     items: questions,
     itemsPerPage: 10,
     searchTerm,
-    searchFields: ["sentence", "blank", "translation", "options"], // نبحث في كل الحقول المفيدة
+    searchFields: ["sentence", "blank", "translation", "options"],
   });
 
   useEffect(() => {
@@ -115,7 +113,7 @@ export default function ManageFillBlank() {
 
   const save = async () => {
     if (!form.sentence.includes("___") || !form.blank.trim() || !form.translation.trim()) {
-      return alert("تأكد من وجود ___ في الجملة وملء كل الحقول الأساسية");
+      return alert("تأكد من وجود ___ في الجملة وملء الحقول الأساسية");
     }
 
     const options = [form.option1, form.option2, form.option3].filter(Boolean);
@@ -157,92 +155,101 @@ export default function ManageFillBlank() {
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-screen text-2xl">جاري التحميل...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen text-2xl text-gray-600">
+        جاري التحميل...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* العنوان + زر الإضافة + شريط البحث */}
-        <div className="rounded-2xl shadow-xl p-8 mb-8 bg-white">
-          <div className="flex items-center justify-between mb-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header + Search */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
             <div>
               <h1 className="text-4xl font-bold text-gray-800">إدارة لعبة ملء الفراغات</h1>
               <p className="text-gray-600 mt-2 text-lg">
-                عدد الأسئلة: {questions.length}
-                {searchTerm && ` (نتائج البحث: ${filteredQuestions.length})`}
+                عدد الأسئلة: <span className="font-bold">{questions.length}</span>
+                {searchTerm && (
+                  <span className="mr-2 text-green-600">
+                    (نتائج البحث: {filteredQuestions.length})
+                  </span>
+                )}
               </p>
             </div>
             <button
               onClick={openAddModal}
-              className="px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-[15px] py-2 rounded-xl hover:opacity-90 transition flex items-center justify-center gap-3"
+              className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-xl hover:opacity-90 transition shadow-lg"
             >
               <Plus size={28} />
               إضافة سؤال جديد
             </button>
           </div>
-
-          {/* شريط البحث */}
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="ابحث في الجملة أو الإجابة أو الترجمة..."
+            placeholder="ابحث في الجملة، الإجابة، أو الترجمة..."
           />
         </div>
 
-        {/* الجدول */}
+        {/* Table */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-green-100">
-              <tr>
-                <th className="px-6 py-4 text-right font-bold text-gray-700">#</th>
-                <th className="px-6 py-4 text-right font-bold text-gray-700">الجملة</th>
-                <th className="px-6 py-4 text-right font-bold text-gray-700">الإجابة الصحيحة</th>
-                <th className="px-6 py-4 text-right font-bold text-gray-700">الخيارات</th>
-                <th className="px-6 py-4 text-right font-bold text-gray-700">الترجمة</th>
-                <th className="px-6 py-4 text-center font-bold text-gray-700">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentQuestions.length === 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-green-100">
                 <tr>
-                  <td colSpan={6} className="text-center py-16 text-gray-500 text-xl">
-                    {searchTerm ? "لا توجد نتائج للبحث" : "لا توجد أسئلة بعد"}
-                  </td>
+                  <th className="px-6 py-4 text-right font-bold text-gray-700">#</th>
+                  <th className="px-6 py-4 text-right font-bold text-gray-700">الجملة</th>
+                  <th className="px-6 py-4 text-right font-bold text-gray-700">الإجابة الصحيحة</th>
+                  <th className="px-6 py-4 text-right font-bold text-gray-700">الخيارات</th>
+                  <th className="px-6 py-4 text-right font-bold text-gray-700">الترجمة</th>
+                  <th className="px-6 py-4 text-center font-bold text-gray-700">إجراءات</th>
                 </tr>
-              ) : (
-                currentQuestions.map((q, index) => (
-                  <tr key={q.id} className="border-t hover:bg-green-50 transition">
-                    <td className="px-6 py-4 text-center font-medium">
-                      {q.order || startIndex + index + 1}
-                    </td>
-                    <td className="px-6 py-4">{q.sentence.replace("___", "___")}</td>
-                    <td className="px-6 py-4 font-bold text-green-600">{q.blank}</td>
-                    <td className="px-6 py-4 text-sm">{q.options.join(" | ")}</td>
-                    <td className="px-6 py-4 text-blue-600">{q.translation}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex justify-center gap-3">
-                        <button
-                          onClick={() => openEditModal(q)}
-                          className="p-3 bg-blue-100 hover:bg-blue-200 rounded-xl transition"
-                        >
-                          <Edit2 size={22} className="text-blue-600" />
-                        </button>
-                        <button
-                          onClick={() => openDeleteModal(q.id!)}
-                          className="p-3 bg-red-100 hover:bg-red-200 rounded-xl transition"
-                        >
-                          <Trash2 size={22} className="text-red-600" />
-                        </button>
-                      </div>
+              </thead>
+              <tbody>
+                {currentQuestions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-20 text-gray-500 text-xl font-medium">
+                      {searchTerm ? "لا توجد نتائج للبحث" : "لا توجد أسئلة بعد"}
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  currentQuestions.map((q, index) => (
+                    <tr key={q.id} className="border-t hover:bg-green-50 transition">
+                      <td className="px-6 py-4 text-center font-medium">
+                        {q.order || startIndex + index + 1}
+                      </td>
+                      <td className="px-6 py-4 text-gray-800">{q.sentence.replace("___", "___")}</td>
+                      <td className="px-6 py-4 font-bold text-green-600">{q.blank}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">{q.options.join(" | ")}</td>
+                      <td className="px-6 py-4 text-blue-600">{q.translation}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex justify-center gap-3">
+                          <button
+                            onClick={() => openEditModal(q)}
+                            className="p-3 bg-blue-100 hover:bg-blue-200 rounded-xl transition"
+                          >
+                            <Edit2 size={22} className="text-blue-600" />
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(q.id!)}
+                            className="p-3 bg-red-100 hover:bg-red-200 rounded-xl transition"
+                          >
+                            <Trash2 size={22} className="text-red-600" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Pagination */}
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -251,104 +258,88 @@ export default function ManageFillBlank() {
         />
       </div>
 
-      {/* مودال الإضافة والتعديل */}
+      {/* Add/Edit Modal with Scroll */}
       {showAddEditModal && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
+        <div className="fixed inset-0  flex items-center justify-center z-50 p-4"style={{
+         
             background: "rgba(0,0,0,0.7)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-          onClick={() => setShowAddEditModal(false)}
-        >
+           
+          }}>
           <div
-            style={{
-              background: "white",
-              padding: "40px",
-              borderRadius: "20px",
-              width: "90%",
-              maxWidth: "700px",
-              position: "relative",
-            }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-screen overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
-            <button
-              onClick={() => setShowAddEditModal(false)}
-              style={{
-                position: "absolute",
-                top: "16px",
-                right: "16px",
-                background: "none",
-                border: "none",
-                fontSize: "32px",
-                cursor: "pointer",
-              }}
-            >
-              ×
-            </button>
-            <h2 className="text-3xl font-bold mb-8 text-center">
-              {isEdit ? "تعديل السؤال" : "إضافة سؤال جديد"}
-            </h2>
-            <textarea
-              placeholder="الجملة (استخدم ___ في مكان الفراغ)"
-              value={form.sentence}
-              onChange={e => setForm({ ...form, sentence: e.target.value })}
-              className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg mb-4 focus:border-green-500 outline-none resize-none h-32"
-              autoFocus
-            />
-            <input
-              placeholder="الإجابة الصحيحة"
-              value={form.blank}
-              onChange={e => setForm({ ...form, blank: e.target.value })}
-              className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg mb-4 focus:border-green-500 outline-none"
-            />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
+              <h2 className="text-3xl font-bold text-gray-800">
+                {isEdit ? "تعديل السؤال" : "إضافة سؤال جديد"}
+              </h2>
+              <button
+                onClick={() => setShowAddEditModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-3xl"
+              >
+                <X size={32} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <textarea
+                placeholder="الجملة (استخدم ___ في مكان الفراغ)"
+                value={form.sentence}
+                onChange={e => setForm({ ...form, sentence: e.target.value })}
+                className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg focus:border-green-500 outline-none resize-none h-32"
+                autoFocus
+              />
               <input
-                placeholder="خيار 1"
-                value={form.option1}
-                onChange={e => setForm({ ...form, option1: e.target.value })}
+                placeholder="الإجابة الصحيحة"
+                value={form.blank}
+                onChange={e => setForm({ ...form, blank: e.target.value })}
+                className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg focus:border-green-500 outline-none"
+              />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input
+                  placeholder="خيار 1"
+                  value={form.option1}
+                  onChange={e => setForm({ ...form, option1: e.target.value })}
+                  className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg focus:border-green-500 outline-none"
+                />
+                <input
+                  placeholder="خيار 2"
+                  value={form.option2}
+                  onChange={e => setForm({ ...form, option2: e.target.value })}
+                  className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg focus:border-green-500 outline-none"
+                />
+                <input
+                  placeholder="خيار 3 (اختياري)"
+                  value={form.option3}
+                  onChange={e => setForm({ ...form, option3: e.target.value })}
+                  className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg focus:border-green-500 outline-none"
+                />
+              </div>
+              <input
+                placeholder="الترجمة العربية للجملة"
+                value={form.translation}
+                onChange={e => setForm({ ...form, translation: e.target.value })}
                 className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg focus:border-green-500 outline-none"
               />
               <input
-                placeholder="خيار 2"
-                value={form.option2}
-                onChange={e => setForm({ ...form, option2: e.target.value })}
-                className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg focus:border-green-500 outline-none"
-              />
-              <input
-                placeholder="خيار 3 (اختياري)"
-                value={form.option3}
-                onChange={e => setForm({ ...form, option3: e.target.value })}
+                type="number"
+                placeholder="الترتيب"
+                value={form.order}
+                onChange={e => setForm({ ...form, order: +e.target.value || 1 })}
                 className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg focus:border-green-500 outline-none"
               />
             </div>
-            <input
-              placeholder="الترجمة العربية للجملة"
-              value={form.translation}
-              onChange={e => setForm({ ...form, translation: e.target.value })}
-              className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg mb-6 focus:border-green-500 outline-none"
-            />
-            <input
-              type="number"
-              placeholder="الترتيب"
-              value={form.order}
-              onChange={e => setForm({ ...form, order: +e.target.value || 1 })}
-              className="w-full p-4 border-2 border-gray-300 rounded-xl text-lg mb-8 focus:border-green-500 outline-none"
-            />
-            <div className="flex gap-4">
+
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex gap-4">
               <button
                 onClick={save}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 rounded-xl font-bold text-xl hover:opacity-90 transition"
+                className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 rounded-xl font-bold text-xl hover:opacity-90 transition shadow-lg"
               >
                 {isEdit ? "حفظ التعديلات" : "حفظ السؤال"}
               </button>
               <button
                 onClick={() => setShowAddEditModal(false)}
-                className="flex-1 bg-gray-300 py-4 rounded-xl font-bold text-xl hover:bg-gray-400 transition"
+                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-4 rounded-xl font-bold text-xl transition"
               >
                 إلغاء
               </button>
@@ -357,32 +348,18 @@ export default function ManageFillBlank() {
         </div>
       )}
 
-      {/* مودال تأكيد الحذف */}
+      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
+        <div className="fixed inset-0  flex items-center justify-center z-50 p-4"   style={{
+         
             background: "rgba(0,0,0,0.7)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-          onClick={() => setShowDeleteModal(false)}
-        >
+           
+          }}>
           <div
-            style={{
-              background: "white",
-              padding: "40px",
-              borderRadius: "20px",
-              width: "90%",
-              maxWidth: "400px",
-              textAlign: "center",
-            }}
+            className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center"
             onClick={e => e.stopPropagation()}
           >
-            <div className="text-red-600 text-6xl mb-6">Warning</div>
+            <div className="text-red-600 text-7xl mb-4">تحذير</div>
             <h3 className="text-2xl font-bold mb-4">تأكيد الحذف</h3>
             <p className="text-gray-600 mb-8 text-lg">
               هل أنت متأكد من حذف هذا السؤال نهائيًا؟<br />
@@ -391,13 +368,13 @@ export default function ManageFillBlank() {
             <div className="flex gap-4">
               <button
                 onClick={confirmDelete}
-                className="flex-1 bg-red-600 text-white py-4 rounded-xl font-bold text-xl hover:bg-red-700 transition"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-bold text-xl transition"
               >
                 نعم، احذف
               </button>
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 bg-gray-300 py-4 rounded-xl font-bold text-xl hover:bg-gray-400 transition"
+                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-4 rounded-xl font-bold text-xl transition"
               >
                 إلغاء
               </button>
