@@ -48,24 +48,24 @@ export function GameMenu({ onSelectGame }: GameMenuProps) {
         <p className="text-sm text-gray-600">تعلم الإنجليزية بطريقة ممتعة</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
+      {/* Smaller 2-column grid */}
+      <div className="max-w-3xl mx-auto grid grid-cols-2 gap-4 justify-center">
         {games.map((game) => {
           const Icon = game.icon;
           return (
             <button
               key={game.id}
               onClick={() => onSelectGame(game.id)}
-              className={`${game.bgColor} p-4 rounded-xl border-2 border-transparent hover:border-gray-300 transition-all active:scale-95 group`}
+              className={`${game.bgColor} p-3 rounded-xl max-w-[300px] w-full mx-auto text-center border-2 border-transparent hover:border-gray-300 transition-all active:scale-95`}
             >
-              <div className="flex items-center gap-3">
-                <div className={`w-14 h-14 bg-gradient-to-br ${game.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                  <Icon className="w-7 h-7 text-white" />
-                </div>
-                <div className="flex-1 text-right">
-                  <h3 className="text-base mb-1">{game.title}</h3>
-                  <p className="text-gray-600 text-xs">{game.description}</p>
-                </div>
+              <div
+                className={`w-12 h-12 mx-auto mb-2 bg-gradient-to-br ${game.color} rounded-xl flex items-center justify-center`}
+              >
+                <Icon className="w-6 h-6 text-white" />
               </div>
+
+              <h3 className="text-sm font-medium">{game.title}</h3>
+              <p className="text-gray-600 text-xs mt-1">{game.description}</p>
             </button>
           );
         })}

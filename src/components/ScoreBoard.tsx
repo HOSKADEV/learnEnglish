@@ -20,8 +20,8 @@ export function ScoreBoard({ scores }: ScoreBoardProps) {
   const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-4 border">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-md p-4 border mt-4">
+      <div className="flex items-center gap-4 mb-4">
         <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg flex items-center justify-center">
           <Trophy className="w-5 h-5 text-white" />
         </div>

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Check, X, RotateCcw, ArrowRight } from 'lucide-react';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../firebase';
+import { ArrowLeft, Check, X, RotateCcw, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface FillBlankGameProps {
@@ -8,78 +10,56 @@ interface FillBlankGameProps {
 }
 
 interface Question {
-  id: number;
+  id?: string;
   sentence: string;
   blank: string;
   options: string[];
   translation: string;
+  order: number;
 }
 
-const questions: Question[] = [
-  {
-    id: 1,
-    sentence: 'I ___ a student.',
-    blank: 'am',
-    options: ['am', 'is', 'are'],
-    translation: 'أنا طالب'
-  },
-  {
-    id: 2,
-    sentence: 'She ___ a teacher.',
-    blank: 'is',
-    options: ['am', 'is', 'are'],
-    translation: 'هي معلمة'
-  },
-  {
-    id: 3,
-    sentence: 'They ___ happy.',
-    blank: 'are',
-    options: ['am', 'is', 'are'],
-    translation: 'هم سعداء'
-  },
-  {
-    id: 4,
-    sentence: 'I ___ to school every day.',
-    blank: 'go',
-    options: ['go', 'goes', 'going'],
-    translation: 'أذهب إلى المدرسة كل يوم'
-  },
-  {
-    id: 5,
-    sentence: 'He ___ English very well.',
-    blank: 'speaks',
-    options: ['speak', 'speaks', 'speaking'],
-    translation: 'هو يتحدث الإنجليزية جيداً'
-  },
-  {
-    id: 6,
-    sentence: 'We ___ a big house.',
-    blank: 'have',
-    options: ['have', 'has', 'having'],
-    translation: 'لدينا منزل كبير'
-  },
-  {
-    id: 7,
-    sentence: 'The cat ___ on the table.',
-    blank: 'is',
-    options: ['am', 'is', 'are'],
-    translation: 'القطة على الطاولة'
-  },
-  {
-    id: 8,
-    sentence: 'I ___ my homework yesterday.',
-    blank: 'did',
-    options: ['do', 'did', 'does'],
-    translation: 'أنجزت واجبي المنزلي بالأمس'
-  }
-];
-
 export function FillBlankGame({ onBack, onScore }: FillBlankGameProps) {
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [score, setScore] = useState(0);
   const [answeredQuestions, setAnsweredQuestions] = useState(0);
+
+  // جلب الأسئلة من Firebase
+  useEffect(() => {
+    loadQuestions();
+  }, []);
+
+  const loadQuestions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const q = query(
+        collection(db, "questions/fillBlank/items"), 
+        orderBy("order", "asc")
+      );
+      const snap = await getDocs(q);
+      const loadedQuestions = snap.docs.map(d => ({ 
+        id: d.id, 
+        ...d.data() 
+      } as Question));
+      
+      if (loadedQuestions.length === 0) {
+        setError("لا توجد أسئلة متاحة حاليًا");
+      } else {
+        setQuestions(loadedQuestions);
+      }
+    } catch (err) {
+      console.error("Error loading questions:", err);
+      setError("فشل تحميل الأسئلة. يرجى المحاولة مرة أخرى");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -112,6 +92,8 @@ export function FillBlankGame({ onBack, onScore }: FillBlankGameProps) {
   };
 
   const renderSentence = () => {
+    if (!currentQuestion) return null;
+    
     const parts = currentQuestion.sentence.split('___');
     return (
       <div className="flex flex-wrap items-center justify-center gap-2 text-xl md:text-2xl">
@@ -131,6 +113,40 @@ export function FillBlankGame({ onBack, onScore }: FillBlankGameProps) {
   };
 
   const isGameComplete = answeredQuestions === questions.length;
+
+  // حالة التحميل
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-8 border">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-green-600" />
+          <p className="text-gray-600">جاري تحميل الأسئلة...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // حالة الخطأ
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-8 border">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="text-red-600 text-5xl">⚠️</div>
+          <p className="text-gray-600 text-center">{error}</p>
+          <div className="flex gap-2">
+            <Button onClick={loadQuestions} size="sm" className="gap-2">
+              <RotateCcw className="w-4 h-4" />
+              إعادة المحاولة
+            </Button>
+            <Button onClick={onBack} variant="outline" size="sm" className="gap-2">
+              رجوع
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

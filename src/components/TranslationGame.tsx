@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { ArrowLeft, Check, X, RotateCcw, ArrowRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../firebase';
+import { ArrowLeft, Check, X, RotateCcw, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface TranslationGameProps {
@@ -8,81 +10,55 @@ interface TranslationGameProps {
 }
 
 interface Question {
-  id: number;
+  id?: string;
   word: string;
   correct: string;
   options: string[];
+  order: number;
 }
 
-const questions: Question[] = [
-  {
-    id: 1,
-    word: 'Happy',
-    correct: 'سعيد',
-    options: ['سعيد', 'حزين', 'غاضب', 'خائف']
-  },
-  {
-    id: 2,
-    word: 'Beautiful',
-    correct: 'جميل',
-    options: ['قبيح', 'جميل', 'كبير', 'صغير']
-  },
-  {
-    id: 3,
-    word: 'Friend',
-    correct: 'صديق',
-    options: ['عدو', 'أخ', 'صديق', 'جار']
-  },
-  {
-    id: 4,
-    word: 'School',
-    correct: 'مدرسة',
-    options: ['مدرسة', 'مستشفى', 'متجر', 'حديقة']
-  },
-  {
-    id: 5,
-    word: 'Food',
-    correct: 'طعام',
-    options: ['ماء', 'طعام', 'هواء', 'نار']
-  },
-  {
-    id: 6,
-    word: 'Sun',
-    correct: 'شمس',
-    options: ['قمر', 'نجم', 'شمس', 'سحاب']
-  },
-  {
-    id: 7,
-    word: 'Fast',
-    correct: 'سريع',
-    options: ['بطيء', 'سريع', 'قوي', 'ضعيف']
-  },
-  {
-    id: 8,
-    word: 'Love',
-    correct: 'حب',
-    options: ['كره', 'حب', 'خوف', 'أمل']
-  },
-  {
-    id: 9,
-    word: 'Cold',
-    correct: 'بارد',
-    options: ['حار', 'بارد', 'دافئ', 'معتدل']
-  },
-  {
-    id: 10,
-    word: 'Night',
-    correct: 'ليل',
-    options: ['صباح', 'ظهر', 'مساء', 'ليل']
-  }
-];
-
 export function TranslationGame({ onBack, onScore }: TranslationGameProps) {
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [score, setScore] = useState(0);
   const [answeredQuestions, setAnsweredQuestions] = useState(0);
+
+  // جلب الأسئلة من Firebase
+  useEffect(() => {
+    loadQuestions();
+  }, []);
+
+  const loadQuestions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const q = query(
+        collection(db, "questions/translation/items"), 
+        orderBy("order", "asc")
+      );
+      const snap = await getDocs(q);
+      const loadedQuestions = snap.docs.map(d => ({ 
+        id: d.id, 
+        ...d.data() 
+      } as Question));
+      
+      if (loadedQuestions.length === 0) {
+        setError("لا توجد أسئلة متاحة حاليًا");
+      } else {
+        setQuestions(loadedQuestions);
+      }
+    } catch (err) {
+      console.error("Error loading questions:", err);
+      setError("فشل تحميل الأسئلة. يرجى المحاولة مرة أخرى");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -115,6 +91,40 @@ export function TranslationGame({ onBack, onScore }: TranslationGameProps) {
   };
 
   const isGameComplete = answeredQuestions === questions.length;
+
+  // حالة التحميل
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-8 border">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-purple-600" />
+          <p className="text-gray-600">جاري تحميل الأسئلة...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // حالة الخطأ
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-8 border">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="text-red-600 text-5xl">⚠️</div>
+          <p className="text-gray-600 text-center">{error}</p>
+          <div className="flex gap-2">
+            <Button onClick={loadQuestions} size="sm" className="gap-2">
+              <RotateCcw className="w-4 h-4" />
+              إعادة المحاولة
+            </Button>
+            <Button onClick={onBack} variant="outline" size="sm" className="gap-2">
+              رجوع
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
