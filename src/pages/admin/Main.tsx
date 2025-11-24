@@ -110,7 +110,7 @@ export default function Main() {
         setStats({
           totalQuestions,
           activeGames: activeGamesCount,
-          growthRate: "+12%", // يمكن تحديثه ديناميكيًا لاحقًا
+          growthRate: "0", // يمكن تحديثه ديناميكيًا لاحقًا
           totalUsers
         });
 
