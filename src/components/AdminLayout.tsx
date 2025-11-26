@@ -11,6 +11,7 @@ import {
   LogOut,
   Home,
   Menu,
+  Headphones,
   X,
   Users
 } from "lucide-react";
@@ -32,6 +33,8 @@ export default function AdminLayout({ user }: AdminLayoutProps) {
     { icon: Languages, label: "الترجمة", path: "/admin/translation" },
     { icon: Shuffle, label: "ترتيب الحروف", path: "/admin/letter-scramble" },
     { icon: Users, label: "المستخدمون", path: "/admin/users" },
+    { icon: Headphones, label: "الاستماع والمطابقة", path: "/admin/match-audio" },
+   
   ];
 
   const isActive = (path: string) => {
