@@ -8,7 +8,15 @@ interface HeaderProps {
   user: any;
   totalScore: number;
   isAdmin: boolean;
+  scores: {
+    wordMatch: number;
+    fillBlank: number;
+    translation: number;
+    letterScramble: number;
+    audioListen: number;
+  };
 }
+
 
 export default function Header({ user, totalScore, isAdmin }: HeaderProps) {
   const navigate = useNavigate();

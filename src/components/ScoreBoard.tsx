@@ -6,6 +6,7 @@ interface ScoreBoardProps {
     fillBlank: number;
     translation: number;
     letterScramble: number;
+    audioListen: number;        // ← أضف هذا
   };
 }
 
@@ -14,10 +15,16 @@ export function ScoreBoard({ scores }: ScoreBoardProps) {
     wordMatch: 'مطابقة الكلمات',
     fillBlank: 'املأ الفراغ',
     translation: 'الترجمة',
-    letterScramble: 'ترتيب الحروف'
+    letterScramble: 'ترتيب الحروف',
+    audioListen: 'الاستماع والكتابة'   // ← أضف هذا
   };
 
-  const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+  // تأكد أن أي قيمة undefined تتحول إلى 0
+  const safeScores = Object.fromEntries(
+    Object.entries(scores).map(([k, v]) => [k, v ?? 0])
+  );
+
+  const totalScore = Object.values(safeScores).reduce((a, b) => a + b, 0);
 
   return (
     <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-md p-4 border mt-4">
@@ -32,7 +39,7 @@ export function ScoreBoard({ scores }: ScoreBoardProps) {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        {Object.entries(scores).map(([game, score]) => (
+        {Object.entries(safeScores).map(([game, score]) => (
           <div key={game} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 text-center">
             <div className="text-xl text-gray-900 mb-0.5">{score}</div>
             <div className="text-xs text-gray-600">{gameNames[game as keyof typeof gameNames]}</div>

@@ -4,13 +4,16 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { auth, db } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, onSnapshot, updateDoc, setDoc, getDoc } from 'firebase/firestore';
+import { updateAchievementProgress, showAchievementNotification } from './utils/achievementsTracker';
 import Layout from './components/Layout';
 import AuthPage from './pages/AuthPage';
 import HomePage from './pages/HomePage';
 import WordMatchPage from './pages/WordMatchPage';
 import FillBlankPage from './pages/FillBlankPage';
 import TranslationPage from './pages/TranslationPage';
+import AudioListenGamePage from './pages/AudioListenGamePage';
 import LetterScramblePage from './pages/LetterScramblePage';
+import AchievementsPage from './pages/AchievementsPage';
 import AdminLayout from './components/AdminLayout';
 import Main from './pages/admin/Main';
 import ManageWordMatch from './pages/admin/ManageWordMatch';
@@ -18,6 +21,7 @@ import ManageLetterScramble from './pages/admin/ManageLetterScramble';
 import ManageTranslation from './pages/admin/ManageTranslation';
 import ManageFillBlank from './pages/admin/ManageFillBlank';
 import ManageUsers from './pages/admin/ManageUsers';
+import ManageWordMatchAudio from './pages/admin/ManageWordMatchAudio';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -29,6 +33,7 @@ export default function App() {
     fillBlank: 0,
     translation: 0,
     letterScramble: 0,
+    audioListen: 0,
   });
 
   // Protected Route Component
@@ -39,16 +44,19 @@ export default function App() {
 
   // Listen for auth changes
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
       setLoading(false);
     });
-    return unsub;
+    return unsubscribe;
   }, []);
 
   // Check if user is admin
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setAdminLoading(false);
+      return;
+    }
     setAdminLoading(true);
     const adminDocRef = doc(db, 'admins', user.uid);
     getDoc(adminDocRef).then((snap) => {
@@ -60,23 +68,67 @@ export default function App() {
   // Listen for user scores
   useEffect(() => {
     if (!user) return;
+    
     const scoreRef = doc(db, 'scores', user.uid);
     const unsub = onSnapshot(scoreRef, (snap) => {
       if (snap.exists()) {
-        setScores(snap.data() as typeof scores);
+        const data = snap.data();
+        setScores({
+          wordMatch: data.wordMatch ?? 0,
+          fillBlank: data.fillBlank ?? 0,
+          translation: data.translation ?? 0,
+          letterScramble: data.letterScramble ?? 0,
+          audioListen: data.audioListen ?? 0,
+        });
       } else {
-        setDoc(scoreRef, { wordMatch: 0, fillBlank: 0, translation: 0, letterScramble: 0 });
-        setScores({ wordMatch: 0, fillBlank: 0, translation: 0, letterScramble: 0 });
+        const initialScores = {
+          wordMatch: 0,
+          fillBlank: 0,
+          translation: 0,
+          letterScramble: 0,
+          audioListen: 0
+        };
+        setDoc(scoreRef, initialScores);
+        setScores(initialScores);
       }
     });
+    
     return unsub;
   }, [user]);
 
+  // تحديث النقاط + تتبع الإنجازات
   const addScore = async (game: keyof typeof scores, points: number) => {
     if (!user) return;
+    
     const newScore = scores[game] + points;
     setScores((prev) => ({ ...prev, [game]: newScore }));
     await updateDoc(doc(db, 'scores', user.uid), { [game]: newScore });
+
+    // حساب النقاط الإجمالية
+    const totalScore = Object.values({ ...scores, [game]: newScore }).reduce((a, b) => a + b, 0);
+
+    // تحديث تقدم الإنجازات
+    try {
+      const newUnlocked = await updateAchievementProgress(
+        user.uid,
+        game,
+        points,
+        totalScore
+      );
+
+      // إظهار إشعار لكل إنجاز جديد
+      if (newUnlocked && newUnlocked.length > 0) {
+        for (const achievementId of newUnlocked) {
+          // جلب تفاصيل الإنجاز من Firebase
+          const achievementDoc = await getDoc(doc(db, 'achievements', achievementId));
+          if (achievementDoc.exists()) {
+            showAchievementNotification(achievementDoc.data().title);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error updating achievements:", err);
+    }
   };
 
   const total = Object.values(scores).reduce((a, b) => a + b, 0);
@@ -101,7 +153,9 @@ export default function App() {
         <Route path="/word-match" element={<WordMatchPage onScore={(p) => addScore('wordMatch', p)} />} />
         <Route path="/fill-blank" element={<FillBlankPage onScore={(p) => addScore('fillBlank', p)} />} />
         <Route path="/translation" element={<TranslationPage onScore={(p) => addScore('translation', p)} />} />
+        <Route path="/audio-listen" element={<AudioListenGamePage onScore={(p) => addScore("audioListen", p)} />} />
         <Route path="/letter-scramble" element={<LetterScramblePage onScore={(p) => addScore('letterScramble', p)} />} />
+        <Route path="/achievements" element={<AchievementsPage />} />
       </Route>
 
       {/* Admin Routes with Admin Layout */}
@@ -113,12 +167,13 @@ export default function App() {
           </AdminRoute>
         }
       >
-        <Route index element={<Main/>} />
+        <Route index element={<Main />} />
         <Route path="word-match" element={<ManageWordMatch />} />
         <Route path="fill-blank" element={<ManageFillBlank />} />
         <Route path="translation" element={<ManageTranslation />} />
         <Route path="letter-scramble" element={<ManageLetterScramble />} />
         <Route path="users" element={<ManageUsers />} />
+        <Route path="match-audio" element={<ManageWordMatchAudio />} />
       </Route>
 
       {/* Fallback */}

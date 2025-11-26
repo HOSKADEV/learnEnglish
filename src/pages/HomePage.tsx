@@ -8,6 +8,7 @@ interface HomePageProps {
     fillBlank: number;
     translation: number;
     letterScramble: number;
+    audioListen: number;  // ← أضف هذا
   };
 }
 
@@ -20,6 +21,7 @@ export default function HomePage({ scores }: HomePageProps) {
       fillBlank: '/fill-blank',
       translation: '/translation',
       letterScramble: '/letter-scramble',
+      audioListen: '/audio-listen',  // ← أضف هذا
     };
     navigate(routes[game]);
   };

@@ -14,7 +14,7 @@ import {
   X,
   Users
 } from "lucide-react";
-
+import { Trophy } from "lucide-react";
 interface AdminLayoutProps {
   user: any;
 }
@@ -27,6 +27,7 @@ export default function AdminLayout({ user }: AdminLayoutProps) {
   const menuItems = [
     { icon: LayoutDashboard, label: "لوحة التحكم", path: "/admin" },
     { icon: BookOpen, label: "مطابقة الكلمات", path: "/admin/word-match" },
+    { icon: Trophy, label: "الإنجازات", path: "/admin/achievements" },
     { icon: FileText, label: "املأ الفراغ", path: "/admin/fill-blank" },
     { icon: Languages, label: "الترجمة", path: "/admin/translation" },
     { icon: Shuffle, label: "ترتيب الحروف", path: "/admin/letter-scramble" },

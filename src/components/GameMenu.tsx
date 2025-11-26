@@ -1,4 +1,4 @@
-import { Puzzle, FileText, Languages, Shuffle } from 'lucide-react';
+import { Puzzle, FileText, Languages, Shuffle, Headphones } from 'lucide-react';
 import type { GameType } from '../App';
 
 interface GameMenuProps {
@@ -38,6 +38,14 @@ export function GameMenu({ onSelectGame }: GameMenuProps) {
       icon: Shuffle,
       color: 'from-pink-500 to-pink-600',
       bgColor: 'bg-pink-50'
+    },
+    {
+      id: 'audioListen' as GameType,
+      title: 'الاستماع والكتابة',
+      description: 'استمع للكلمة واكتبها بشكل صحيح',
+      icon: Headphones,
+      color: 'from-orange-500 to-orange-600',
+      bgColor: 'bg-orange-50'
     }
   ];
 
@@ -48,7 +56,7 @@ export function GameMenu({ onSelectGame }: GameMenuProps) {
         <p className="text-sm text-gray-600">تعلم الإنجليزية بطريقة ممتعة</p>
       </div>
 
-      {/* Smaller 2-column grid */}
+      {/* 2-column grid for smaller cards */}
       <div className="max-w-3xl mx-auto grid grid-cols-2 gap-4 justify-center">
         {games.map((game) => {
           const Icon = game.icon;
@@ -63,7 +71,6 @@ export function GameMenu({ onSelectGame }: GameMenuProps) {
               >
                 <Icon className="w-6 h-6 text-white" />
               </div>
-
               <h3 className="text-sm font-medium">{game.title}</h3>
               <p className="text-gray-600 text-xs mt-1">{game.description}</p>
             </button>

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Gamepad2, FileText, Languages, Shuffle, Menu, X, LayoutDashboard } from "lucide-react"
+import { Gamepad2, FileText, Languages, Shuffle, Menu, X, LayoutDashboard, Trophy } from "lucide-react"
 
 const navigationItems = [
   {
@@ -8,6 +8,12 @@ const navigationItems = [
     label: "Dashboard",
     icon: LayoutDashboard,
     href: "/admin",
+  },
+  {
+    id: "achievements",
+    label: "الإنجازات والشارات",
+    icon: Trophy,               
+    href: "/admin/achievements",
   },
   {
     id: "wordMatch",
@@ -33,7 +39,19 @@ const navigationItems = [
     icon: Shuffle,
     href: "/admin/letter-scramble",
   },
-]
+  {
+    id: "matchAudio",
+    label: "الاستماع والمطابقة",
+    icon: Headphones,
+    href: "/admin/match-audio",
+  },
+  {
+    id: "users",
+    label: "إدارة المستخدمين",
+    icon: Users,
+    href: "/admin/users",
+  },
+];
 
 const styles = {
   mobileToggle: {
